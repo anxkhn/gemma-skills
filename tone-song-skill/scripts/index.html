@@ -1,0 +1,181 @@
+<!--
+@license
+Copyright 2026 Google LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================
+-->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Tone Song Generator</title>
+  </head>
+  <body>
+    <script>
+      const NOTE_PATTERN = /^[A-G](#|b)?[0-8]$/;
+      const TIME_PATTERN = /^\d+:\d+(:\d+)?$/;
+      const DURATION_PATTERN = /^(\d+n|\d+t|\d+m|\d+(\.\d+)?|1m)$/;
+
+      window["ai_edge_gallery_get_result"] = async (data) => {
+        try {
+          const input = JSON.parse(data || "{}");
+          const song = normalizeSong(input);
+          const url = `webview.html?song=${encodeURIComponent(toBase64Url(song))}`;
+
+          return JSON.stringify({
+            result: `Created "${song.title}" with ${song.melody.length} melody notes at ${song.bpm} BPM.`,
+            webview: {
+              url,
+              aspectRatio: 1.25,
+            },
+          });
+        } catch (error) {
+          return JSON.stringify({
+            error: `Failed to create Tone.js song: ${error.message}`,
+          });
+        }
+      };
+
+      function normalizeSong(input) {
+        const prompt = String(input.prompt || "").slice(0, 240);
+        let melody = sanitizeMelody(input.melody);
+        let chords = sanitizeChords(input.chords);
+        let bass = sanitizeMelody(input.bass);
+        let drums = sanitizeDrums(input.drums);
+        let title = String(input.title || "Tone Song").slice(0, 48);
+        let bpm = clamp(Number(input.bpm) || 110, 60, 160);
+
+        if (!melody.length) {
+          const sketch = defaultSketch();
+          melody = sketch.melody;
+          chords = chords.length ? chords : sketch.chords;
+          bass = bass.length ? bass : sketch.bass;
+          drums = drums.length ? drums : sketch.drums;
+        }
+
+        return {
+          title,
+          prompt,
+          bpm,
+          bars: Math.max(2, inferBars(melody, chords, bass, drums)),
+          melody,
+          chords,
+          bass,
+          drums,
+        };
+      }
+
+      function clamp(value, min, max) {
+        return Math.max(min, Math.min(max, value));
+      }
+
+      function sanitizeMelody(events) {
+        if (!Array.isArray(events)) {
+          return [];
+        }
+        return events
+          .map((event) => ({
+            time: validTime(event && event.time) ? event.time : "",
+            note: validNote(event && event.note) ? event.note : "",
+            duration: validDuration(event && event.duration) ? event.duration : "8n",
+            velocity: clamp(Number(event && event.velocity) || 0.85, 0.1, 1),
+          }))
+          .filter((event) => event.time && event.note)
+          .slice(0, 96);
+      }
+
+      function sanitizeChords(events) {
+        if (!Array.isArray(events)) {
+          return [];
+        }
+        return events
+          .map((event) => ({
+            time: validTime(event && event.time) ? event.time : "",
+            notes: Array.isArray(event && event.notes) ? event.notes.filter(validNote).slice(0, 6) : [],
+            duration: validDuration(event && event.duration) ? event.duration : "1m",
+            velocity: clamp(Number(event && event.velocity) || 0.55, 0.1, 1),
+          }))
+          .filter((event) => event.time && event.notes.length)
+          .slice(0, 32);
+      }
+
+      function sanitizeDrums(events) {
+        if (!Array.isArray(events)) {
+          return [];
+        }
+        return events
+          .map((event) => ({
+            time: validTime(event && event.time) ? event.time : "",
+            type: ["kick", "snare", "hat"].includes(event && event.type) ? event.type : "",
+          }))
+          .filter((event) => event.time && event.type)
+          .slice(0, 96);
+      }
+
+      function validNote(value) {
+        return NOTE_PATTERN.test(String(value || ""));
+      }
+
+      function validTime(value) {
+        return TIME_PATTERN.test(String(value || ""));
+      }
+
+      function validDuration(value) {
+        return DURATION_PATTERN.test(String(value || ""));
+      }
+
+      function inferBars(...groups) {
+        let maxBar = 0;
+        groups.flat().forEach((event) => {
+          const bar = Number(String(event.time || "0:0:0").split(":")[0]) || 0;
+          maxBar = Math.max(maxBar, bar);
+        });
+        return maxBar + 1;
+      }
+
+      function toBase64Url(value) {
+        const bytes = new TextEncoder().encode(JSON.stringify(value));
+        let binary = "";
+        bytes.forEach((byte) => {
+          binary += String.fromCharCode(byte);
+        });
+        return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+      }
+
+      function defaultSketch() {
+        return {
+          melody: [
+            n("0:0:0", "C4", "8n"),
+            n("0:1:0", "E4", "8n"),
+            n("0:2:0", "G4", "8n"),
+            n("0:3:0", "C5", "4n"),
+          ],
+          chords: [c("0:0:0", ["C4", "E4", "G4"]), c("1:0:0", ["F4", "A4", "C5"])],
+          bass: [n("0:0:0", "C2", "4n"), n("1:0:0", "F2", "4n")],
+          drums: [],
+        };
+      }
+
+      function n(time, note, duration, velocity) {
+        return { time, note, duration, velocity: velocity || 0.85 };
+      }
+
+      function c(time, notes, duration, velocity) {
+        return { time, notes, duration: duration || "1m", velocity: velocity || 0.5 };
+      }
+    </script>
+  </body>
+</html>

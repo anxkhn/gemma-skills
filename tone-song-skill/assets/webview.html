@@ -1,0 +1,450 @@
+<!--
+@license
+Copyright 2026 Google LLC
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+==============================================================================
+-->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>Tone Song Player</title>
+    <script src="https://unpkg.com/tone@14.8.49/build/Tone.js" defer></script>
+    <style>
+      :root {
+        --ink: #171615;
+        --panel: #f4efe2;
+        --panel-2: #fff9ea;
+        --line: #171615;
+        --red: #f45b43;
+        --green: #4ebf7b;
+        --gold: #f2c84b;
+        --muted: #6a6258;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+      }
+
+      body {
+        background: var(--panel);
+        color: var(--ink);
+        font-family: "Trebuchet MS", Verdana, sans-serif;
+        overflow: hidden;
+      }
+
+      .surface {
+        width: 100%;
+        height: 100%;
+        display: grid;
+        grid-template-rows: auto 1fr auto;
+        border: 3px solid var(--line);
+        background: var(--panel);
+      }
+
+      header {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: start;
+        padding: 14px 14px 10px;
+        border-bottom: 3px solid var(--line);
+        background: var(--panel-2);
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 22px;
+        line-height: 1.05;
+        font-weight: 800;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+      }
+
+      .pill {
+        border: 2px solid var(--line);
+        padding: 4px 7px;
+        background: var(--gold);
+        font-size: 12px;
+        line-height: 1;
+        font-weight: 700;
+      }
+
+      .pill:nth-child(2) {
+        background: var(--green);
+      }
+
+      .pill:nth-child(3) {
+        background: var(--red);
+      }
+
+      .power {
+        width: 52px;
+        height: 52px;
+        border: 3px solid var(--line);
+        border-radius: 50%;
+        background: var(--red);
+        box-shadow: inset -5px -5px 0 rgba(23, 22, 21, 0.18);
+      }
+
+      main {
+        display: grid;
+        grid-template-rows: 1fr auto;
+        min-height: 0;
+      }
+
+      .sequencer {
+        display: grid;
+        grid-template-columns: repeat(8, 1fr);
+        gap: 6px;
+        padding: 14px;
+        align-content: end;
+      }
+
+      .step {
+        min-width: 0;
+        height: 112px;
+        border: 2px solid var(--line);
+        display: flex;
+        align-items: end;
+        background: var(--panel-2);
+        overflow: hidden;
+      }
+
+      .bar {
+        width: 100%;
+        height: var(--level);
+        min-height: 14px;
+        background: var(--green);
+        border-top: 2px solid var(--line);
+        transition:
+          height 180ms ease,
+          background 180ms ease;
+      }
+
+      .step.active .bar {
+        background: var(--red);
+        height: 100%;
+      }
+
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        padding: 0 14px 14px;
+      }
+
+      button {
+        min-height: 48px;
+        border: 3px solid var(--line);
+        border-radius: 0;
+        background: var(--ink);
+        color: var(--panel-2);
+        font: inherit;
+        font-size: 16px;
+        font-weight: 800;
+        cursor: pointer;
+        touch-action: manipulation;
+      }
+
+      button.secondary {
+        background: var(--panel-2);
+        color: var(--ink);
+      }
+
+      button:active {
+        transform: translateY(1px);
+      }
+
+      footer {
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        padding: 8px 14px;
+        border-top: 3px solid var(--line);
+        background: var(--ink);
+        color: var(--panel-2);
+        font-size: 12px;
+      }
+
+      .status {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .meter {
+        display: grid;
+        grid-template-columns: repeat(4, 8px);
+        gap: 4px;
+        align-items: end;
+        height: 18px;
+        flex: 0 0 auto;
+      }
+
+      .meter span {
+        width: 8px;
+        height: 6px;
+        background: var(--gold);
+      }
+
+      .meter.playing span:nth-child(1) {
+        animation: meter 420ms infinite alternate;
+      }
+
+      .meter.playing span:nth-child(2) {
+        animation: meter 360ms 70ms infinite alternate;
+      }
+
+      .meter.playing span:nth-child(3) {
+        animation: meter 500ms 110ms infinite alternate;
+      }
+
+      .meter.playing span:nth-child(4) {
+        animation: meter 300ms 30ms infinite alternate;
+      }
+
+      @keyframes meter {
+        from {
+          height: 6px;
+        }
+        to {
+          height: 18px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <section class="surface">
+      <header>
+        <div>
+          <h1 id="title">Tone Song</h1>
+          <div class="meta">
+            <span class="pill" id="mood">mood</span>
+            <span class="pill" id="tempo">120 BPM</span>
+            <span class="pill" id="key">C major</span>
+          </div>
+        </div>
+        <div class="power" aria-hidden="true"></div>
+      </header>
+
+      <main>
+        <div class="sequencer" id="sequencer"></div>
+        <div class="controls">
+          <button id="play" type="button">Play</button>
+          <button class="secondary" id="stop" type="button">Stop</button>
+        </div>
+      </main>
+
+      <footer>
+        <span class="status" id="status">Ready</span>
+        <span class="meter" id="meter" aria-hidden="true">
+          <span></span>
+          <span></span>
+          <span></span>
+          <span></span>
+        </span>
+      </footer>
+    </section>
+
+    <script>
+      const song = readSong();
+      const playButton = document.getElementById("play");
+      const stopButton = document.getElementById("stop");
+      const statusEl = document.getElementById("status");
+      const meterEl = document.getElementById("meter");
+      const sequencerEl = document.getElementById("sequencer");
+      let activeNodes = [];
+      let activeTimer = 0;
+
+      renderSong();
+
+      playButton.addEventListener("click", playSong);
+      stopButton.addEventListener("click", stopSong);
+
+      function readSong() {
+        try {
+          const encoded = new URLSearchParams(window.location.search).get("song") || "";
+          if (!encoded) {
+            throw new Error("Missing song payload.");
+          }
+          const base64 = encoded.replace(/-/g, "+").replace(/_/g, "/");
+          const padded = base64 + "=".repeat((4 - (base64.length % 4)) % 4);
+          const binary = atob(padded);
+          const bytes = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+          return JSON.parse(new TextDecoder().decode(bytes));
+        } catch (error) {
+          return {
+            title: "Tone Song",
+            bpm: 110,
+            bars: 2,
+            melody: [{ time: "0:0:0", note: "C4", duration: "4n", velocity: 0.85 }],
+            chords: [{ time: "0:0:0", notes: ["C4", "E4", "G4"], duration: "1m", velocity: 0.5 }],
+            bass: [],
+            drums: [],
+          };
+        }
+      }
+
+      function renderSong() {
+        document.getElementById("title").textContent = song.title || "Tone Song";
+        document.getElementById("mood").textContent = `${song.melody.length} notes`;
+        document.getElementById("tempo").textContent = `${song.bpm || 120} BPM`;
+        document.getElementById("key").textContent = "Tone.js";
+
+        sequencerEl.innerHTML = "";
+        const stepCount = Math.max(8, Math.min(24, Math.ceil((song.bars || 2) * 2)));
+        for (let index = 0; index < stepCount; index++) {
+          const step = document.createElement("span");
+          step.className = "step";
+          step.dataset.step = index;
+          const bar = document.createElement("span");
+          bar.className = "bar";
+          bar.style.setProperty("--level", `${22 + ((index * 17) % 72)}%`);
+          step.appendChild(bar);
+          sequencerEl.appendChild(step);
+        }
+      }
+
+      async function playSong() {
+        try {
+          if (!window.Tone) {
+            throw new Error("Tone.js is still loading.");
+          }
+
+          await Tone.start();
+          stopSong();
+          scheduleSong();
+          Tone.Transport.start("+0.05");
+          statusEl.textContent = "Playing";
+          meterEl.classList.add("playing");
+          animateSteps();
+        } catch (error) {
+          statusEl.textContent = error.message;
+        }
+      }
+
+      function stopSong() {
+        window.clearInterval(activeTimer);
+        if (window.Tone) {
+          Tone.Transport.stop();
+          Tone.Transport.cancel();
+        }
+        activeNodes.forEach((node) => node.dispose && node.dispose());
+        activeNodes = [];
+        document.querySelectorAll(".step.active").forEach((step) => step.classList.remove("active"));
+        meterEl.classList.remove("playing");
+        statusEl.textContent = "Ready";
+      }
+
+      function scheduleSong() {
+        Tone.Transport.bpm.value = song.bpm || 120;
+        const leadSynth = new Tone.Synth({
+          oscillator: { type: "triangle" },
+          envelope: { attack: 0.01, decay: 0.08, sustain: 0.45, release: 0.25 },
+        }).toDestination();
+        const chordSynth = new Tone.PolySynth(Tone.Synth, {
+          oscillator: { type: "sine" },
+          envelope: { attack: 0.02, decay: 0.2, sustain: 0.35, release: 0.6 },
+        }).toDestination();
+        const bassSynth = new Tone.MonoSynth({
+          oscillator: { type: "square" },
+          envelope: { attack: 0.02, decay: 0.1, sustain: 0.35, release: 0.25 },
+        }).toDestination();
+        const kick = new Tone.MembraneSynth().toDestination();
+        const snare = new Tone.NoiseSynth({
+          noise: { type: "white" },
+          envelope: { attack: 0.001, decay: 0.12, sustain: 0 },
+        }).toDestination();
+        const hat = new Tone.MetalSynth({
+          frequency: 240,
+          envelope: { attack: 0.001, decay: 0.04, release: 0.01 },
+          harmonicity: 5.1,
+          modulationIndex: 16,
+        }).toDestination();
+
+        const melodyPart = new Tone.Part((time, event) => {
+          leadSynth.triggerAttackRelease(event.note, event.duration || "8n", time, event.velocity || 0.85);
+        }, song.melody.map((event) => [event.time, event])).start(0);
+
+        const chordPart = new Tone.Part((time, event) => {
+          chordSynth.triggerAttackRelease(event.notes, event.duration || "1m", time, event.velocity || 0.5);
+        }, song.chords.map((event) => [event.time, event])).start(0);
+
+        const bassPart = new Tone.Part((time, event) => {
+          bassSynth.triggerAttackRelease(event.note, event.duration || "8n", time, event.velocity || 0.6);
+        }, song.bass.map((event) => [event.time, event])).start(0);
+
+        const drumPart = new Tone.Part((time, event) => {
+          if (event.type === "kick") {
+            kick.triggerAttackRelease("C1", "8n", time);
+          } else if (event.type === "snare") {
+            snare.triggerAttackRelease("16n", time);
+          } else if (event.type === "hat") {
+            hat.triggerAttackRelease("32n", time);
+          }
+        }, song.drums.map((event) => [event.time, event])).start(0);
+
+        activeNodes = [
+          leadSynth,
+          chordSynth,
+          bassSynth,
+          kick,
+          snare,
+          hat,
+          melodyPart,
+          chordPart,
+          bassPart,
+          drumPart,
+        ];
+
+        Tone.Transport.schedule(() => {
+          stopSong();
+          statusEl.textContent = "Finished";
+        }, `${song.bars || 2}:0:0`);
+      }
+
+      function animateSteps() {
+        const steps = Array.from(document.querySelectorAll(".step"));
+        let index = 0;
+        activeTimer = window.setInterval(() => {
+          steps.forEach((step) => step.classList.remove("active"));
+          if (steps[index % steps.length]) {
+            steps[index % steps.length].classList.add("active");
+          }
+          index++;
+        }, (60000 / (song.bpm || 120)) * 2);
+      }
+    </script>
+  </body>
+</html>

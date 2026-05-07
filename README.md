@@ -33,3 +33,19 @@ You can verify the hosted skill manifest at:
 ```text
 https://anxkhn.github.io/gemma-skills/image-transform-studio/SKILL.md
 ```
+
+## Tone Song Skill
+
+`tone-song-skill` creates a short playable Tone.js song from note events supplied by the model.
+
+After this repository is published with GitHub Pages enabled, load the skill in AI Edge Gallery with this folder URL:
+
+```text
+https://anxkhn.github.io/gemma-skills/tone-song-skill
+```
+
+You can verify the hosted skill manifest at:
+
+```text
+https://anxkhn.github.io/gemma-skills/tone-song-skill/SKILL.md
+```
