@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WordArt Gallery</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f8f3df;
+      --paper: #120f0a;
+      --muted: rgba(248, 243, 223, 0.7);
+      --line: rgba(248, 243, 223, 0.18);
+      --ease-out: cubic-bezier(0.19, 1, 0.22, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--paper);
+    }
+
+    body {
+      min-height: 100%;
+      margin: 0;
+      color: var(--ink);
+      font-family: Georgia, 'Times New Roman', serif;
+      background:
+        radial-gradient(circle at 15% 10%, rgba(255, 61, 0, 0.2), transparent 28rem),
+        radial-gradient(circle at 88% 18%, rgba(64, 179, 255, 0.18), transparent 24rem),
+        linear-gradient(135deg, #120f0a 0%, #21170d 45%, #0d1518 100%);
+      overflow-x: hidden;
+    }
+
+    body::before {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      content: '';
+      opacity: 0.18;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.055) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+      background-size: 32px 32px;
+      mask-image: linear-gradient(to bottom, black, transparent 80%);
+    }
+
+    .shell {
+      position: relative;
+      width: min(100%, 1180px);
+      margin: 0 auto;
+      padding: clamp(22px, 5vw, 54px);
+    }
+
+    .masthead {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 12px;
+      padding-bottom: clamp(22px, 4vw, 38px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      margin: 0;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.76rem;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      max-width: 920px;
+      margin: 0;
+      font-size: clamp(2.4rem, 9vw, 7.8rem);
+      font-weight: 900;
+      line-height: 0.9;
+      letter-spacing: 0;
+      overflow-wrap: anywhere;
+      text-wrap: balance;
+    }
+
+    .summary {
+      max-width: 760px;
+      margin: 0;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: clamp(0.78rem, 1.8vw, 0.94rem);
+      line-height: 1.55;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+      gap: 14px;
+      padding-top: clamp(18px, 4vw, 34px);
+    }
+
+    .tile {
+      position: relative;
+      display: grid;
+      min-width: 0;
+      min-height: 188px;
+      padding: 16px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background:
+        linear-gradient(145deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02)),
+        var(--tile-bg, rgba(255, 255, 255, 0.04));
+      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.28);
+      animation: rise 520ms var(--ease-out) both;
+      animation-delay: calc(var(--index) * 32ms);
+    }
+
+    .tile::after {
+      position: absolute;
+      inset: auto -25% -40% 20%;
+      height: 82px;
+      content: '';
+      background: radial-gradient(circle, var(--glow, rgba(255, 255, 255, 0.2)), transparent 68%);
+      filter: blur(8px);
+      opacity: 0.82;
+    }
+
+    .label {
+      position: relative;
+      z-index: 2;
+      margin: 0;
+      color: rgba(248, 243, 223, 0.76);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    .stage {
+      position: relative;
+      z-index: 2;
+      display: grid;
+      min-width: 0;
+      min-height: 124px;
+      overflow: hidden;
+      place-items: center;
+      padding: 18px 4px 4px;
+    }
+
+    wordart-widget {
+      display: block;
+      width: max-content;
+      max-width: none;
+      transform: translateZ(0) scale(var(--fit-scale, 0.68));
+      transform-origin: center;
+    }
+
+    .fallback {
+      display: none;
+      max-width: 100%;
+      font-size: clamp(1.55rem, 9vw, 3.7rem);
+      font-weight: 900;
+      line-height: 0.92;
+      text-align: center;
+      overflow-wrap: anywhere;
+      background: linear-gradient(110deg, var(--color1), var(--color2));
+      background-clip: text;
+      color: transparent;
+      filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.4));
+      animation: shimmer 2.8s var(--ease-out) infinite alternate;
+    }
+
+    .component-missing wordart-widget {
+      display: none;
+    }
+
+    .component-missing .fallback {
+      display: block;
+    }
+
+    .footer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px 16px;
+      justify-content: space-between;
+      padding-top: 20px;
+      color: rgba(248, 243, 223, 0.58);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.72rem;
+    }
+
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes shimmer {
+      from {
+        filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.4)) saturate(1);
+        transform: translateY(0);
+      }
+      to {
+        filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.46)) saturate(1.45);
+        transform: translateY(-4px);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="masthead">
+      <p class="eyebrow">AI Edge Gallery Skill / WordArt</p>
+      <h1 id="title">WordArt Gallery</h1>
+      <p class="summary" id="summary"></p>
+    </header>
+
+    <section class="gallery" id="gallery" aria-label="WordArt style gallery"></section>
+
+    <footer class="footer">
+      <span>@codeweaver/wordart via CDN</span>
+      <span id="count"></span>
+    </footer>
+  </main>
+
+  <script src="https://unpkg.com/svelte@4"></script>
+  <script src="https://unpkg.com/@codeweaver/wordart@1.0.0/wordart.umd.js"></script>
+  <script>
+    const STYLES = [
+      ['Solar Flare', '#ff3e00', '#ffd166', '#3a1402'],
+      ['Pool Light', '#40b3ff', '#2de2e6', '#041d27'],
+      ['Candy Sign', '#ff4d9d', '#ffe45e', '#301020'],
+      ['Night Chrome', '#d9d9d9', '#7b8794', '#16181c'],
+      ['Lime Wire', '#a3ff12', '#00f5d4', '#10230c'],
+      ['Hot Metal', '#ff5400', '#9d0208', '#2c0905'],
+      ['Ocean Pop', '#00bbf9', '#fee440', '#061b2b'],
+      ['Rose Glass', '#ffafcc', '#cdb4db', '#251221'],
+      ['Arcade Blue', '#4361ee', '#4cc9f0', '#070f2f'],
+      ['Citrus Ink', '#f7b801', '#3ddc97', '#202000'],
+      ['Violet Volt', '#b5179e', '#f72585', '#24102a'],
+      ['Paper Gold', '#f9dc5c', '#ffffff', '#2b2310'],
+      ['Signal Red', '#ef233c', '#ffb703', '#2f0508'],
+      ['Mint Static', '#80ed99', '#57cc99', '#0f2418'],
+      ['Deep Sea', '#48cae4', '#0077b6', '#051b25'],
+      ['Bubble Beam', '#ff99c8', '#fcf6bd', '#2c1823'],
+      ['Blacklight', '#7209b7', '#4cc9f0', '#170928'],
+      ['Heat Map', '#fb5607', '#ff006e', '#2c0718'],
+      ['Graphite', '#e9ecef', '#adb5bd', '#151515'],
+      ['Street Lime', '#ccff33', '#38b000', '#13250a'],
+      ['Royal Ink', '#3a0ca3', '#f1fa8c', '#15102e'],
+      ['Peach Neon', '#ffbe0b', '#fb5607', '#331607'],
+      ['Ice Vapor', '#caf0f8', '#90dbf4', '#091b21'],
+      ['Magenta Cyan', '#f72585', '#4cc9f0', '#230a20']
+    ];
+
+    const params = new URLSearchParams(window.location.search);
+    const name = normalizeText(params.get('name')) || 'Anas Khan';
+    const baseSize = clampNumber(params.get('size'), 1, 6, 3);
+    const baseSpeed = clampNumber(params.get('speed'), 0, 8, 2);
+    const selectedStyles = STYLES;
+
+    document.title = `${name} WordArt Gallery`;
+    document.getElementById('title').textContent = name;
+    document.getElementById('summary').textContent = 'Animated name art rendered across color, scale, and motion treatments.';
+    document.getElementById('count').textContent = `${selectedStyles.length} styles`;
+
+    const gallery = document.getElementById('gallery');
+
+    selectedStyles.forEach(([label, color1, color2, tileBg], index) => {
+      const tile = document.createElement('article');
+      tile.className = 'tile';
+      tile.style.setProperty('--index', index);
+      tile.style.setProperty('--color1', color1);
+      tile.style.setProperty('--color2', color2);
+      tile.style.setProperty('--tile-bg', tileBg);
+      tile.style.setProperty('--glow', color2);
+      tile.style.setProperty('--fit-scale', fitScaleFor(name));
+
+      const title = document.createElement('p');
+      title.className = 'label';
+      title.textContent = label;
+
+      const stage = document.createElement('div');
+      stage.className = 'stage';
+
+      const widget = document.createElement('wordart-widget');
+      widget.setAttribute('name', name);
+      widget.setAttribute('size', String(sizeFor(index)));
+      widget.setAttribute('speed', String(speedFor(index)));
+      widget.setAttribute('color1', color1);
+      widget.setAttribute('color2', color2);
+
+      const fallback = document.createElement('div');
+      fallback.className = 'fallback';
+      fallback.textContent = name;
+
+      stage.append(widget, fallback);
+      tile.append(title, stage);
+      gallery.append(tile);
+    });
+
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        if (!window.customElements || !window.customElements.get('wordart-widget')) {
+          document.body.classList.add('component-missing');
+        }
+      }, 600);
+    });
+
+    function sizeFor(index) {
+      const rhythm = [0.64, 0.76, 0.88, 1, 0.72, 0.94];
+      return round(baseSize * rhythm[index % rhythm.length], 2);
+    }
+
+    function speedFor(index) {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return 0;
+      }
+
+      const rhythm = [0.45, 0.7, 1, 1.35, 1.8, 2.3];
+      return round(baseSpeed * rhythm[index % rhythm.length], 2);
+    }
+
+    function normalizeText(value) {
+      if (typeof value !== 'string') {
+        return '';
+      }
+
+      return value.replace(/\s+/g, ' ').trim().slice(0, 80);
+    }
+
+    function clampNumber(value, min, max, fallback) {
+      const number = Number(value);
+
+      if (!Number.isFinite(number)) {
+        return fallback;
+      }
+
+      return Math.min(max, Math.max(min, number));
+    }
+
+    function round(value, places) {
+      const factor = 10 ** places;
+      return Math.round(value * factor) / factor;
+    }
+
+    function fitScaleFor(text) {
+      return round(Math.min(0.82, Math.max(0.4, 5.9 / Math.max(text.length, 7))), 2);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>WordArt Gallery Runner</title>
+</head>
+<body>
+  <script>
+    const DEFAULT_NAME = 'Anas Khan';
+
+    window['ai_edge_gallery_get_result'] = async (data) => {
+      try {
+        const input = parseInput(data);
+        const params = new URLSearchParams({
+          name: input.name,
+          size: String(input.size),
+          speed: String(input.speed)
+        });
+
+        return JSON.stringify({
+          result: `Generated a full WordArt gallery for ${input.name}.`,
+          webview: {
+            url: `webview.html?${params.toString()}`,
+            aspectRatio: 1.18
+          }
+        });
+      } catch (error) {
+        console.error(error);
+        return JSON.stringify({
+          error: `Failed to create WordArt gallery: ${error.message}`
+        });
+      }
+    };
+
+    function parseInput(data) {
+      const raw = data ? JSON.parse(data) : {};
+      const name = normalizeText(raw.name) || DEFAULT_NAME;
+      const size = clampNumber(raw.size, 1, 6, 3);
+      const speed = clampNumber(raw.speed, 0, 8, 2);
+
+      return {
+        name,
+        size,
+        speed
+      };
+    }
+
+    function normalizeText(value) {
+      if (typeof value !== 'string') {
+        return '';
+      }
+
+      return value.replace(/\s+/g, ' ').trim().slice(0, 80);
+    }
+
+    function clampNumber(value, min, max, fallback) {
+      const number = Number(value);
+
+      if (!Number.isFinite(number)) {
+        return fallback;
+      }
+
+      return Math.min(max, Math.max(min, number));
+    }
+  </script>
+</body>
+</html>
