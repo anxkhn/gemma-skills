@@ -18,3 +18,18 @@ You can verify the hosted skill manifest at:
 https://anxkhn.github.io/gemma-skills/wordart-gallery/SKILL.md
 ```
 
+## Image Transform Studio
+
+`image-transform-studio` turns natural-language image requests into a prefilled upload tool for converting, resizing, and compressing images with browser-only `@imagemagick/magick-wasm`.
+
+After this repository is published with GitHub Pages enabled, load the skill in AI Edge Gallery with this folder URL:
+
+```text
+https://anxkhn.github.io/gemma-skills/image-transform-studio
+```
+
+You can verify the hosted skill manifest at:
+
+```text
+https://anxkhn.github.io/gemma-skills/image-transform-studio/SKILL.md
+```

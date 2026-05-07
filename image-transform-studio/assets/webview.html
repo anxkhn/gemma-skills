@@ -1,0 +1,1783 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Image Transform Studio</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --page: #f5f1e8;
+      --panel: #fffdf7;
+      --ink: #1e2523;
+      --muted: #67706d;
+      --line: #d9d0c1;
+      --strong-line: #241f1a;
+      --field: #fbf8ef;
+      --accent: #0b6b5a;
+      --accent-2: #c43d2f;
+      --accent-3: #234e9f;
+      --shadow: rgba(30, 37, 35, 0.12);
+      --radius: 8px;
+      --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      min-height: 100%;
+      background: var(--page);
+    }
+
+    body {
+      min-height: 100%;
+      margin: 0;
+      color: var(--ink);
+      font-family: Avenir Next, ui-sans-serif, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif;
+      letter-spacing: 0;
+      background:
+        linear-gradient(90deg, rgba(36, 31, 26, 0.045) 1px, transparent 1px),
+        linear-gradient(rgba(36, 31, 26, 0.038) 1px, transparent 1px),
+        var(--page);
+      background-size: 28px 28px;
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    .shell {
+      width: min(100%, 1180px);
+      margin: 0 auto;
+      padding: clamp(14px, 3vw, 28px);
+    }
+
+    .topbar {
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      justify-content: space-between;
+      padding: 12px 0 18px;
+      border-bottom: 2px solid var(--strong-line);
+    }
+
+    .title-block {
+      min-width: 0;
+    }
+
+    .eyebrow {
+      margin: 0 0 5px;
+      color: var(--accent);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.7rem, 5vw, 3.7rem);
+      line-height: 0.94;
+      letter-spacing: 0;
+    }
+
+    .version {
+      flex: 0 0 auto;
+      padding: 8px 10px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--muted);
+      background: rgba(255, 253, 247, 0.72);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.7rem;
+    }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(290px, 380px) minmax(0, 1fr);
+      gap: 16px;
+      padding-top: 16px;
+    }
+
+    .panel {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 253, 247, 0.92);
+      box-shadow: 0 18px 46px var(--shadow);
+    }
+
+    .settings {
+      align-self: start;
+      overflow: hidden;
+    }
+
+    .plan {
+      padding: 14px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(11, 107, 90, 0.12), rgba(35, 78, 159, 0.09));
+    }
+
+    .plan-label {
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .plan-text {
+      margin: 0;
+      font-size: 0.93rem;
+      font-weight: 700;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .control-grid {
+      display: grid;
+      gap: 12px;
+      padding: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .two {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    label,
+    .field-label {
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0;
+      text-transform: uppercase;
+    }
+
+    input,
+    select {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 9px 10px;
+      color: var(--ink);
+      background: var(--field);
+      outline: none;
+      transition: border-color 160ms var(--ease), box-shadow 160ms var(--ease), background 160ms var(--ease);
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--accent);
+      background: #ffffff;
+      box-shadow: 0 0 0 3px rgba(11, 107, 90, 0.14);
+    }
+
+    input[type='range'] {
+      min-height: 28px;
+      padding: 0;
+      accent-color: var(--accent);
+      background: transparent;
+    }
+
+    input[type='checkbox'] {
+      width: 18px;
+      min-height: 18px;
+      accent-color: var(--accent);
+    }
+
+    input[type='color'] {
+      min-height: 40px;
+      padding: 4px;
+    }
+
+    .check-row {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      min-height: 38px;
+      padding: 9px 10px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--field);
+    }
+
+    .check-row label {
+      flex: 1;
+      color: var(--ink);
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 700;
+      text-transform: none;
+    }
+
+    .range-head {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .pill {
+      flex: 0 0 auto;
+      min-width: 46px;
+      padding: 3px 8px;
+      border-radius: 999px;
+      color: #ffffff;
+      background: var(--accent);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.72rem;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .stage {
+      display: grid;
+      grid-template-rows: auto auto minmax(220px, auto) auto;
+      min-height: 620px;
+      overflow: hidden;
+    }
+
+    .drop-zone {
+      display: grid;
+      gap: 12px;
+      place-items: center;
+      min-height: 178px;
+      margin: 14px;
+      padding: 22px;
+      border: 2px dashed #aa9f8f;
+      border-radius: var(--radius);
+      background:
+        linear-gradient(135deg, rgba(196, 61, 47, 0.12), transparent 46%),
+        linear-gradient(315deg, rgba(35, 78, 159, 0.12), transparent 50%),
+        #fffaf0;
+      text-align: center;
+      transition: transform 180ms var(--ease), border-color 180ms var(--ease), background 180ms var(--ease);
+    }
+
+    .drop-zone.is-dragging {
+      border-color: var(--accent);
+      background: #eff8f5;
+      transform: translateY(-1px);
+    }
+
+    .drop-icon {
+      display: grid;
+      width: 52px;
+      height: 52px;
+      place-items: center;
+      border: 2px solid var(--strong-line);
+      border-radius: 50%;
+      color: var(--strong-line);
+      background: #ffffff;
+      font-size: 1.4rem;
+      font-weight: 900;
+    }
+
+    .drop-title {
+      margin: 0;
+      font-size: clamp(1.05rem, 3vw, 1.35rem);
+      font-weight: 900;
+    }
+
+    .drop-meta {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.45;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .button {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      min-height: 40px;
+      border: 1px solid var(--strong-line);
+      border-radius: 7px;
+      padding: 9px 12px;
+      color: var(--ink);
+      background: #ffffff;
+      font-weight: 900;
+      text-decoration: none;
+      transition: transform 160ms var(--ease), box-shadow 160ms var(--ease), background 160ms var(--ease);
+    }
+
+    .button:hover {
+      box-shadow: 0 8px 20px rgba(30, 37, 35, 0.14);
+      transform: translateY(-1px);
+    }
+
+    .button.primary {
+      color: #ffffff;
+      background: var(--strong-line);
+    }
+
+    .button.accent {
+      color: #ffffff;
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .status {
+      min-height: 42px;
+      margin: 0 14px;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      color: var(--muted);
+      background: #f9f5ec;
+      font-size: 0.88rem;
+      line-height: 1.35;
+    }
+
+    .status strong {
+      color: var(--ink);
+    }
+
+    .status.error {
+      color: #7f1d1d;
+      border-color: rgba(196, 61, 47, 0.45);
+      background: #fff0ee;
+    }
+
+    .status.warn {
+      color: #6a4600;
+      border-color: rgba(174, 112, 0, 0.35);
+      background: #fff7db;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      padding: 14px;
+    }
+
+    .preview {
+      display: grid;
+      grid-template-rows: auto minmax(220px, 1fr) auto;
+      min-width: 0;
+      min-height: 330px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fffdf7;
+    }
+
+    .preview-head {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .preview-title {
+      margin: 0;
+      font-size: 0.82rem;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+
+    .preview-meta {
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.72rem;
+      text-align: right;
+    }
+
+    .image-box {
+      display: grid;
+      min-height: 220px;
+      place-items: center;
+      padding: 12px;
+      background:
+        linear-gradient(45deg, #e9e1d3 25%, transparent 25%),
+        linear-gradient(-45deg, #e9e1d3 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #e9e1d3 75%),
+        linear-gradient(-45deg, transparent 75%, #e9e1d3 75%);
+      background-color: #f8f2e7;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+      background-size: 20px 20px;
+    }
+
+    .image-box img {
+      display: block;
+      max-width: 100%;
+      max-height: 360px;
+      border: 1px solid rgba(36, 31, 26, 0.14);
+      border-radius: 4px;
+      background: #ffffff;
+      box-shadow: 0 12px 28px rgba(30, 37, 35, 0.16);
+      object-fit: contain;
+    }
+
+    .empty {
+      color: var(--muted);
+      font-size: 0.86rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 1px;
+      border-top: 1px solid var(--line);
+      background: var(--line);
+    }
+
+    .metric {
+      min-width: 0;
+      padding: 9px 10px;
+      background: #fffdf7;
+    }
+
+    .metric-label {
+      display: block;
+      color: var(--muted);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.65rem;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    .metric-value {
+      display: block;
+      margin-top: 2px;
+      overflow: hidden;
+      font-size: 0.82rem;
+      font-weight: 900;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .result-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      justify-content: space-between;
+      padding: 0 14px 14px;
+    }
+
+    .result-note {
+      min-width: 180px;
+      flex: 1;
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    /* Mobile-first minimal shell. Keep this late so it overrides the desktop-heavy base styles. */
+    body {
+      background: #fbfaf7;
+    }
+
+    .shell {
+      width: min(100%, 680px);
+      padding: 12px;
+    }
+
+    .topbar {
+      align-items: center;
+      padding: 2px 0 10px;
+      border-bottom: 1px solid #191919;
+    }
+
+    .eyebrow,
+    .version,
+    .preview-meta,
+    .result-note {
+      display: none;
+    }
+
+    h1 {
+      font-size: 1.12rem;
+      font-weight: 650;
+      line-height: 1.08;
+    }
+
+    .workspace {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding-top: 10px;
+    }
+
+    .panel,
+    .preview {
+      border-color: #dedbd2;
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: none;
+    }
+
+    .stage {
+      order: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
+    .settings {
+      order: 2;
+      background: #ffffff;
+    }
+
+    .plan {
+      padding: 10px 12px;
+      border-bottom-color: #ece8de;
+      background: #ffffff;
+    }
+
+    .plan-label {
+      display: none;
+    }
+
+    .plan-text {
+      color: #3f4643;
+      font-size: 0.82rem;
+      font-weight: 500;
+    }
+
+    .control-grid {
+      gap: 10px;
+      padding: 12px;
+    }
+
+    .two {
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    label,
+    .field-label {
+      font-size: 0.66rem;
+    }
+
+    input,
+    select {
+      min-height: 44px;
+      border-color: #dedbd2;
+      border-radius: 8px;
+      background: #fbfaf7;
+      font-size: 16px;
+    }
+
+    .check-row {
+      min-height: 44px;
+      border-color: #dedbd2;
+      border-radius: 8px;
+      background: #fbfaf7;
+    }
+
+    .check-row label {
+      font-size: 0.86rem;
+    }
+
+    .pill {
+      background: #191919;
+    }
+
+    .drop-zone {
+      order: 1;
+      min-height: 118px;
+      margin: 10px;
+      padding: 14px;
+      border: 1.5px dashed #bdb8ad;
+      background: #ffffff;
+    }
+
+    .drop-icon {
+      width: 36px;
+      height: 36px;
+      border: 1px solid #191919;
+      font-size: 1rem;
+    }
+
+    .drop-title {
+      font-size: 0.96rem;
+      font-weight: 650;
+    }
+
+    .drop-meta {
+      font-size: 0.78rem;
+    }
+
+    .button {
+      width: 100%;
+      min-height: 46px;
+      border-radius: 8px;
+      font-weight: 650;
+    }
+
+    .button:hover {
+      box-shadow: none;
+      transform: none;
+    }
+
+    .button.accent,
+    .button.primary {
+      border-color: #191919;
+      background: #191919;
+    }
+
+    .status {
+      order: 2;
+      min-height: 38px;
+      margin: 0 10px;
+      border-color: #dedbd2;
+      background: #fbfaf7;
+      font-size: 0.82rem;
+    }
+
+    .status strong {
+      font-weight: 650;
+    }
+
+    .preview-grid {
+      order: 4;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .preview {
+      grid-template-rows: auto minmax(132px, auto) auto;
+      min-height: 0;
+    }
+
+    .preview-head {
+      padding: 9px 10px;
+      border-bottom-color: #ece8de;
+    }
+
+    .preview-title {
+      font-size: 0.74rem;
+      font-weight: 650;
+    }
+
+    .image-box {
+      min-height: 132px;
+      padding: 8px;
+      background-color: #f6f4ef;
+      background-size: 16px 16px;
+      background-position: 0 0, 0 8px, 8px -8px, -8px 0;
+    }
+
+    .image-box img {
+      max-height: 240px;
+      box-shadow: none;
+    }
+
+    .metrics {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      border-top-color: #ece8de;
+      background: #ece8de;
+    }
+
+    .metric {
+      padding: 8px;
+      background: #ffffff;
+    }
+
+    .metric-label {
+      font-size: 0.6rem;
+      font-weight: 650;
+    }
+
+    .metric-value {
+      font-size: 0.76rem;
+      font-weight: 650;
+    }
+
+    .result-actions {
+      display: block;
+      order: 3;
+      padding: 0 10px 10px;
+    }
+
+    @media (max-width: 860px) {
+      .workspace {
+        grid-template-columns: 1fr;
+      }
+
+      .settings {
+        order: 2;
+      }
+
+      .stage {
+        order: 1;
+        min-height: 0;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .topbar {
+        display: grid;
+      }
+
+      .version {
+        width: fit-content;
+      }
+
+      .preview-grid,
+      .two {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        min-height: 0;
+      }
+
+      .metrics {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 1ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <div class="title-block">
+        <p class="eyebrow">AI Edge Gallery / Browser ImageMagick</p>
+        <h1>Image Transform Studio</h1>
+      </div>
+      <div class="version">magick-wasm 0.0.38</div>
+    </header>
+
+    <section class="workspace">
+      <aside class="panel settings" aria-label="Image transform settings">
+        <div class="plan">
+          <p class="plan-label">Gemma Payload</p>
+          <p class="plan-text" id="planText">Transform an image</p>
+        </div>
+
+        <form class="control-grid" id="settingsForm">
+          <div class="two">
+            <div class="field">
+              <label for="outputFormat">Format</label>
+              <select id="outputFormat">
+                <option value="original">Original</option>
+                <option value="jpeg">JPG</option>
+                <option value="png">PNG</option>
+                <option value="webp">WebP</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="targetSizeKB">Target KB</label>
+              <input id="targetSizeKB" type="number" min="1" max="51200" inputmode="numeric" placeholder="No limit">
+            </div>
+          </div>
+
+          <div class="field">
+            <div class="range-head">
+              <label for="quality">Quality</label>
+              <span class="pill" id="qualityValue">92</span>
+            </div>
+            <input id="quality" type="range" min="1" max="100" value="92">
+          </div>
+
+          <div class="field">
+            <label for="resizeMode">Resize</label>
+            <select id="resizeMode">
+              <option value="none">None</option>
+              <option value="fit-within">Fit within max box</option>
+              <option value="width">Set width</option>
+              <option value="height">Set height</option>
+              <option value="exact">Exact dimensions</option>
+              <option value="percentage">Percentage scale</option>
+            </select>
+          </div>
+
+          <div class="two" id="maxFields">
+            <div class="field">
+              <label for="maxWidth">Max width</label>
+              <input id="maxWidth" type="number" min="1" max="50000" inputmode="numeric" placeholder="Any">
+            </div>
+            <div class="field">
+              <label for="maxHeight">Max height</label>
+              <input id="maxHeight" type="number" min="1" max="50000" inputmode="numeric" placeholder="Any">
+            </div>
+          </div>
+
+          <div class="two" id="sizeFields">
+            <div class="field">
+              <label for="width">Width</label>
+              <input id="width" type="number" min="1" max="50000" inputmode="numeric" placeholder="Auto">
+            </div>
+            <div class="field">
+              <label for="height">Height</label>
+              <input id="height" type="number" min="1" max="50000" inputmode="numeric" placeholder="Auto">
+            </div>
+          </div>
+
+          <div class="field" id="percentField">
+            <label for="percentage">Scale percent</label>
+            <input id="percentage" type="number" min="1" max="1000" inputmode="numeric" placeholder="100">
+          </div>
+
+          <div class="two">
+            <div class="check-row">
+              <input id="onlyShrink" type="checkbox">
+              <label for="onlyShrink">Only shrink</label>
+            </div>
+            <div class="field">
+              <label for="backgroundColor">JPG background</label>
+              <input id="backgroundColor" type="color" value="#ffffff">
+            </div>
+          </div>
+
+          <div class="two">
+            <div class="check-row">
+              <input id="stripMetadata" type="checkbox">
+              <label for="stripMetadata">Strip metadata</label>
+            </div>
+            <div class="check-row">
+              <input id="autoOrient" type="checkbox">
+              <label for="autoOrient">Auto orient</label>
+            </div>
+          </div>
+
+          <button class="button primary" id="processButton" type="button" disabled>Process Image</button>
+        </form>
+      </aside>
+
+      <section class="panel stage" aria-label="Image upload and output">
+        <div class="drop-zone" id="dropZone">
+          <input class="hidden" id="fileInput" type="file" accept="image/*">
+          <div class="drop-icon" aria-hidden="true">+</div>
+          <div>
+            <p class="drop-title">Drop an image or choose a file</p>
+            <p class="drop-meta">Processing happens locally in this webview.</p>
+          </div>
+          <div class="button-row">
+            <button class="button accent" id="chooseButton" type="button">Choose Image</button>
+          </div>
+        </div>
+
+        <div class="status" id="status">Waiting for an image.</div>
+
+        <div class="preview-grid">
+          <article class="preview">
+            <div class="preview-head">
+              <p class="preview-title">Source</p>
+              <span class="preview-meta" id="sourceMeta">-</span>
+            </div>
+            <div class="image-box" id="sourceBox">
+              <span class="empty">No source image</span>
+            </div>
+            <div class="metrics">
+              <div class="metric">
+                <span class="metric-label">Format</span>
+                <span class="metric-value" id="sourceFormat">-</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Size</span>
+                <span class="metric-value" id="sourceSize">-</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Pixels</span>
+                <span class="metric-value" id="sourcePixels">-</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="preview">
+            <div class="preview-head">
+              <p class="preview-title">Output</p>
+              <span class="preview-meta" id="outputMeta">-</span>
+            </div>
+            <div class="image-box" id="outputBox">
+              <span class="empty">No output yet</span>
+            </div>
+            <div class="metrics">
+              <div class="metric">
+                <span class="metric-label">Format</span>
+                <span class="metric-value" id="outputFormatMetric">-</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Size</span>
+                <span class="metric-value" id="outputSize">-</span>
+              </div>
+              <div class="metric">
+                <span class="metric-label">Pixels</span>
+                <span class="metric-value" id="outputPixels">-</span>
+              </div>
+            </div>
+          </article>
+        </div>
+
+        <div class="result-actions">
+          <div class="result-note" id="resultNote">Upload an image to create an output file.</div>
+          <a class="button primary hidden" id="downloadLink" download>Download Output</a>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script type="module">
+    const MAGICK_MODULE_URL = 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.38/dist/index.js';
+    const MAGICK_WASM_URL = 'https://cdn.jsdelivr.net/npm/@imagemagick/magick-wasm@0.0.38/dist/magick.wasm';
+    const MIN_DOWNSCALE_EDGE = 96;
+
+    const FORMAT_META = {
+      jpeg: {
+        label: 'JPG',
+        extension: 'jpg',
+        mime: 'image/jpeg',
+        magickName: 'Jpeg',
+        supportsQuality: true
+      },
+      png: {
+        label: 'PNG',
+        extension: 'png',
+        mime: 'image/png',
+        magickName: 'Png',
+        supportsQuality: false
+      },
+      webp: {
+        label: 'WebP',
+        extension: 'webp',
+        mime: 'image/webp',
+        magickName: 'WebP',
+        supportsQuality: true
+      }
+    };
+
+    const DEFAULT_CONFIG = {
+      originalRequest: 'Transform an image',
+      outputFormat: 'original',
+      targetSizeKB: null,
+      quality: null,
+      resize: {
+        mode: 'none',
+        maxWidth: null,
+        maxHeight: null,
+        width: null,
+        height: null,
+        percentage: null,
+        onlyShrink: true
+      },
+      stripMetadata: true,
+      autoOrient: true,
+      backgroundColor: '#ffffff',
+      filenameHint: 'transformed-image'
+    };
+
+    const els = {
+      planText: document.getElementById('planText'),
+      outputFormat: document.getElementById('outputFormat'),
+      targetSizeKB: document.getElementById('targetSizeKB'),
+      quality: document.getElementById('quality'),
+      qualityValue: document.getElementById('qualityValue'),
+      resizeMode: document.getElementById('resizeMode'),
+      maxFields: document.getElementById('maxFields'),
+      sizeFields: document.getElementById('sizeFields'),
+      percentField: document.getElementById('percentField'),
+      maxWidth: document.getElementById('maxWidth'),
+      maxHeight: document.getElementById('maxHeight'),
+      width: document.getElementById('width'),
+      height: document.getElementById('height'),
+      percentage: document.getElementById('percentage'),
+      onlyShrink: document.getElementById('onlyShrink'),
+      backgroundColor: document.getElementById('backgroundColor'),
+      stripMetadata: document.getElementById('stripMetadata'),
+      autoOrient: document.getElementById('autoOrient'),
+      processButton: document.getElementById('processButton'),
+      dropZone: document.getElementById('dropZone'),
+      fileInput: document.getElementById('fileInput'),
+      chooseButton: document.getElementById('chooseButton'),
+      status: document.getElementById('status'),
+      sourceBox: document.getElementById('sourceBox'),
+      outputBox: document.getElementById('outputBox'),
+      sourceMeta: document.getElementById('sourceMeta'),
+      outputMeta: document.getElementById('outputMeta'),
+      sourceFormat: document.getElementById('sourceFormat'),
+      sourceSize: document.getElementById('sourceSize'),
+      sourcePixels: document.getElementById('sourcePixels'),
+      outputFormatMetric: document.getElementById('outputFormatMetric'),
+      outputSize: document.getElementById('outputSize'),
+      outputPixels: document.getElementById('outputPixels'),
+      resultNote: document.getElementById('resultNote'),
+      downloadLink: document.getElementById('downloadLink')
+    };
+
+    let config = readPayload();
+    let sourceFile = null;
+    let sourceUrl = '';
+    let outputUrl = '';
+    let processingToken = 0;
+    let magickLoadPromise = null;
+
+    hydrateControls(config);
+    renderPlan();
+    bindEvents();
+    updateResizeFields();
+
+    function bindEvents() {
+      els.chooseButton.addEventListener('click', () => els.fileInput.click());
+      els.dropZone.addEventListener('click', (event) => {
+        if (event.target === els.dropZone) {
+          els.fileInput.click();
+        }
+      });
+      els.fileInput.addEventListener('change', () => {
+        const file = els.fileInput.files && els.fileInput.files[0];
+        if (file) {
+          loadSourceFile(file);
+        }
+      });
+
+      ['dragenter', 'dragover'].forEach((eventName) => {
+        els.dropZone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          els.dropZone.classList.add('is-dragging');
+        });
+      });
+
+      ['dragleave', 'drop'].forEach((eventName) => {
+        els.dropZone.addEventListener(eventName, (event) => {
+          event.preventDefault();
+          els.dropZone.classList.remove('is-dragging');
+        });
+      });
+
+      els.dropZone.addEventListener('drop', (event) => {
+        const file = event.dataTransfer && event.dataTransfer.files && event.dataTransfer.files[0];
+        if (file) {
+          loadSourceFile(file);
+        }
+      });
+
+      els.processButton.addEventListener('click', () => processImage());
+
+      document.getElementById('settingsForm').addEventListener('input', () => {
+        config = readControls();
+        renderPlan();
+        updateResizeFields();
+        els.qualityValue.textContent = String(config.quality || 92);
+        queueProcess();
+      });
+
+      document.getElementById('settingsForm').addEventListener('change', () => {
+        config = readControls();
+        renderPlan();
+        updateResizeFields();
+        queueProcess();
+      });
+    }
+
+    async function loadSourceFile(file) {
+      if (!file.type.startsWith('image/') && !isImageExtension(file.name)) {
+        setStatus('Choose an image file.', 'error');
+        return;
+      }
+
+      sourceFile = file;
+      clearOutput();
+
+      if (sourceUrl) {
+        URL.revokeObjectURL(sourceUrl);
+      }
+
+      sourceUrl = URL.createObjectURL(file);
+      renderImage(els.sourceBox, sourceUrl, file.name);
+      els.sourceMeta.textContent = file.name;
+      els.sourceFormat.textContent = detectedFormatLabel(file);
+      els.sourceSize.textContent = formatBytes(file.size);
+      els.sourcePixels.textContent = 'Reading...';
+      els.processButton.disabled = false;
+      setStatus('Source loaded. Processing with the current settings.', 'normal');
+
+      readImageDimensions(sourceUrl)
+        .then(({ width, height }) => {
+          els.sourcePixels.textContent = `${width} x ${height}`;
+        })
+        .catch(() => {
+          els.sourcePixels.textContent = '-';
+        });
+
+      await processImage();
+    }
+
+    function queueProcess() {
+      if (!sourceFile) {
+        return;
+      }
+
+      const token = ++processingToken;
+      window.setTimeout(() => {
+        if (token === processingToken) {
+          processImage();
+        }
+      }, 280);
+    }
+
+    async function processImage() {
+      if (!sourceFile) {
+        return;
+      }
+
+      const token = ++processingToken;
+      clearOutput();
+      setStatus('Loading ImageMagick runtime...', 'normal');
+      els.processButton.disabled = true;
+
+      try {
+        const magick = await loadMagick();
+
+        if (token !== processingToken) {
+          return;
+        }
+
+        setStatus('Transforming image...', 'normal');
+
+        const inputBytes = new Uint8Array(await sourceFile.arrayBuffer());
+        const outputFormat = resolveOutputFormat(config.outputFormat, sourceFile, config.targetSizeKB);
+        const meta = FORMAT_META[outputFormat];
+        const result = await transformWithMagick(magick, inputBytes, outputFormat, config);
+
+        if (token !== processingToken) {
+          return;
+        }
+
+        const blob = new Blob([result.data], { type: meta.mime });
+        outputUrl = URL.createObjectURL(blob);
+        renderImage(els.outputBox, outputUrl, `Output ${meta.label}`);
+
+        els.outputMeta.textContent = `${meta.label} image`;
+        els.outputFormatMetric.textContent = meta.label;
+        els.outputSize.textContent = formatBytes(blob.size);
+        els.outputPixels.textContent = `${result.width} x ${result.height}`;
+        els.downloadLink.href = outputUrl;
+        els.downloadLink.download = outputFileName(sourceFile.name, config.filenameHint, meta.extension);
+        els.downloadLink.classList.remove('hidden');
+
+        const compression = sourceFile.size ? Math.round((1 - blob.size / sourceFile.size) * 100) : 0;
+        const changeText = compression > 0 ? `${compression}% smaller` : `${Math.abs(compression)}% larger`;
+        els.resultNote.textContent = `Output is ${formatBytes(blob.size)} (${changeText}).`;
+
+        if (result.warning) {
+          setStatus(result.warning, 'warn');
+        } else if (config.targetSizeKB && blob.size <= config.targetSizeKB * 1024) {
+          setStatus(`<strong>Done.</strong> The output is under ${config.targetSizeKB} KB.`, 'normal', true);
+        } else {
+          setStatus('<strong>Done.</strong> Output is ready to download.', 'normal', true);
+        }
+      } catch (error) {
+        console.error(error);
+        setStatus(`Failed: ${error.message}`, 'error');
+        els.resultNote.textContent = 'The transform did not complete.';
+      } finally {
+        if (token === processingToken) {
+          els.processButton.disabled = !sourceFile;
+        }
+      }
+    }
+
+    async function transformWithMagick(magick, inputBytes, outputFormat, settings) {
+      const {
+        ImageMagick,
+        MagickFormat,
+        MagickColor,
+        AlphaAction
+      } = magick;
+
+      const meta = FORMAT_META[outputFormat];
+      const format = MagickFormat[meta.magickName];
+
+      return ImageMagick.read(inputBytes, async (image) => {
+        if (settings.autoOrient && typeof image.autoOrient === 'function') {
+          image.autoOrient();
+        }
+
+        const resizeResult = applyResize(image, settings.resize);
+
+        if (settings.stripMetadata && typeof image.strip === 'function') {
+          image.strip();
+        }
+
+        if (outputFormat === 'jpeg') {
+          image.backgroundColor = new MagickColor(settings.backgroundColor || '#ffffff');
+          if (image.hasAlpha && AlphaAction && AlphaAction.Remove !== undefined) {
+            image.alpha(AlphaAction.Remove);
+          }
+        }
+
+        const encoded = await encodeWithTarget(image, format, meta, settings);
+
+        return {
+          data: encoded.data,
+          width: image.width,
+          height: image.height,
+          quality: encoded.quality,
+          warning: encoded.warning,
+          resized: resizeResult.changed || encoded.downscaled
+        };
+      });
+    }
+
+    function applyResize(image, resize) {
+      const plan = resizePlanFor(image.width, image.height, resize);
+
+      if (!plan || (plan.width === image.width && plan.height === image.height)) {
+        return { changed: false };
+      }
+
+      image.resize(plan.width, plan.height);
+      if (typeof image.resetPage === 'function') {
+        image.resetPage();
+      }
+
+      return { changed: true, width: plan.width, height: plan.height };
+    }
+
+    function resizePlanFor(currentWidth, currentHeight, resize) {
+      if (!resize || resize.mode === 'none') {
+        return null;
+      }
+
+      let width = currentWidth;
+      let height = currentHeight;
+
+      if (resize.mode === 'fit-within') {
+        const maxWidth = resize.maxWidth || currentWidth;
+        const maxHeight = resize.maxHeight || currentHeight;
+        let scale = Math.min(maxWidth / currentWidth, maxHeight / currentHeight);
+
+        if (resize.onlyShrink) {
+          scale = Math.min(1, scale);
+        }
+
+        width = Math.max(1, Math.round(currentWidth * scale));
+        height = Math.max(1, Math.round(currentHeight * scale));
+      }
+
+      if (resize.mode === 'width' && resize.width) {
+        const scale = resize.width / currentWidth;
+        if (resize.onlyShrink && scale > 1) {
+          return null;
+        }
+        width = resize.width;
+        height = Math.max(1, Math.round(currentHeight * scale));
+      }
+
+      if (resize.mode === 'height' && resize.height) {
+        const scale = resize.height / currentHeight;
+        if (resize.onlyShrink && scale > 1) {
+          return null;
+        }
+        width = Math.max(1, Math.round(currentWidth * scale));
+        height = resize.height;
+      }
+
+      if (resize.mode === 'exact' && resize.width && resize.height) {
+        const upscales = resize.width > currentWidth || resize.height > currentHeight;
+        if (resize.onlyShrink && upscales) {
+          return null;
+        }
+        width = resize.width;
+        height = resize.height;
+      }
+
+      if (resize.mode === 'percentage' && resize.percentage) {
+        const scale = resize.percentage / 100;
+        if (resize.onlyShrink && scale > 1) {
+          return null;
+        }
+        width = Math.max(1, Math.round(currentWidth * scale));
+        height = Math.max(1, Math.round(currentHeight * scale));
+      }
+
+      return { width, height };
+    }
+
+    async function encodeWithTarget(image, format, meta, settings) {
+      const targetBytes = settings.targetSizeKB ? settings.targetSizeKB * 1024 : null;
+      const preferredQuality = meta.supportsQuality ? clampNumber(settings.quality || 92, 1, 100) : null;
+
+      if (!targetBytes) {
+        return {
+          data: await writeImage(image, format, preferredQuality),
+          quality: preferredQuality,
+          downscaled: false,
+          warning: ''
+        };
+      }
+
+      if (meta.supportsQuality) {
+        let lastOverTarget = null;
+        let downscaled = false;
+
+        for (let attempt = 0; attempt < 10; attempt += 1) {
+          const search = await qualitySearch(image, format, targetBytes, Math.min(preferredQuality || 92, 100));
+
+          if (search.bestUnder) {
+            return {
+              data: search.bestUnder.data,
+              quality: search.bestUnder.quality,
+              downscaled,
+              warning: ''
+            };
+          }
+
+          lastOverTarget = search.smallest || lastOverTarget;
+
+          if (!canDownscaleFurther(image)) {
+            break;
+          }
+
+          const scale = downscaleRatio(targetBytes, lastOverTarget ? lastOverTarget.data.length : targetBytes * 2);
+          image.resize(
+            Math.max(1, Math.round(image.width * scale)),
+            Math.max(1, Math.round(image.height * scale))
+          );
+          downscaled = true;
+        }
+
+        const fallback = lastOverTarget || {
+          data: await writeImage(image, format, 24),
+          quality: 24
+        };
+
+        return {
+          data: fallback.data,
+          quality: fallback.quality,
+          downscaled,
+          warning: `Output is ${formatBytes(fallback.data.length)}, which is above the ${settings.targetSizeKB} KB target.`
+        };
+      }
+
+      let data = await writeImage(image, format, null);
+      let downscaled = false;
+
+      for (let attempt = 0; data.length > targetBytes && attempt < 12 && canDownscaleFurther(image); attempt += 1) {
+        const scale = downscaleRatio(targetBytes, data.length);
+        image.resize(
+          Math.max(1, Math.round(image.width * scale)),
+          Math.max(1, Math.round(image.height * scale))
+        );
+        downscaled = true;
+        data = await writeImage(image, format, null);
+      }
+
+      return {
+        data,
+        quality: null,
+        downscaled,
+        warning: data.length > targetBytes
+          ? `Output is ${formatBytes(data.length)}, which is above the ${settings.targetSizeKB} KB target. PNG is lossless, so more downscaling may be needed.`
+          : ''
+      };
+    }
+
+    async function qualitySearch(image, format, targetBytes, maxQuality) {
+      let low = 18;
+      let high = Math.max(18, maxQuality);
+      let bestUnder = null;
+      let smallest = null;
+
+      for (let index = 0; index < 8 && low <= high; index += 1) {
+        const quality = Math.floor((low + high) / 2);
+        const data = await writeImage(image, format, quality);
+        const candidate = { data, quality };
+
+        if (!smallest || data.length < smallest.data.length) {
+          smallest = candidate;
+        }
+
+        if (data.length <= targetBytes) {
+          bestUnder = candidate;
+          low = quality + 1;
+        } else {
+          high = quality - 1;
+        }
+      }
+
+      return { bestUnder, smallest };
+    }
+
+    function writeImage(image, format, quality) {
+      return new Promise((resolve) => {
+        if (Number.isFinite(quality)) {
+          image.quality = quality;
+        }
+
+        image.write(format, (data) => {
+          resolve(new Uint8Array(data));
+        });
+      });
+    }
+
+    function canDownscaleFurther(image) {
+      return Math.max(image.width, image.height) > MIN_DOWNSCALE_EDGE;
+    }
+
+    function downscaleRatio(targetBytes, actualBytes) {
+      if (!actualBytes || actualBytes <= targetBytes) {
+        return 0.9;
+      }
+
+      return clampNumber(Math.sqrt(targetBytes / actualBytes) * 0.94, 0.62, 0.9);
+    }
+
+    async function loadMagick() {
+      if (!magickLoadPromise) {
+        magickLoadPromise = (async () => {
+          const module = await import(MAGICK_MODULE_URL);
+          const response = await fetch(MAGICK_WASM_URL, { cache: 'force-cache' });
+
+          if (!response.ok) {
+            throw new Error(`Could not load magick.wasm (${response.status})`);
+          }
+
+          await module.initializeImageMagick(await response.arrayBuffer());
+
+          return module;
+        })();
+      }
+
+      return magickLoadPromise;
+    }
+
+    function readPayload() {
+      const params = new URLSearchParams(window.location.search);
+      const payload = params.get('payload');
+
+      if (!payload) {
+        return cloneDefaultConfig();
+      }
+
+      try {
+        const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+        const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, '=');
+        const json = decodeURIComponent(escape(atob(padded)));
+
+        return normalizeConfig(JSON.parse(json));
+      } catch (error) {
+        console.error(error);
+        return cloneDefaultConfig();
+      }
+    }
+
+    function normalizeConfig(raw) {
+      const merged = {
+        ...DEFAULT_CONFIG,
+        ...raw,
+        resize: {
+          ...DEFAULT_CONFIG.resize,
+          ...(raw && raw.resize ? raw.resize : {})
+        }
+      };
+
+      merged.outputFormat = ['original', 'jpeg', 'png', 'webp'].includes(merged.outputFormat)
+        ? merged.outputFormat
+        : DEFAULT_CONFIG.outputFormat;
+      merged.targetSizeKB = nullableInteger(merged.targetSizeKB, 1, 51200);
+      merged.quality = nullableInteger(merged.quality, 1, 100);
+      merged.originalRequest = String(merged.originalRequest || DEFAULT_CONFIG.originalRequest).slice(0, 240);
+      merged.backgroundColor = /^#[0-9a-f]{6}$/i.test(merged.backgroundColor)
+        ? merged.backgroundColor
+        : DEFAULT_CONFIG.backgroundColor;
+      merged.filenameHint = slugify(merged.filenameHint || DEFAULT_CONFIG.filenameHint);
+      merged.stripMetadata = Boolean(merged.stripMetadata);
+      merged.autoOrient = Boolean(merged.autoOrient);
+
+      return merged;
+    }
+
+    function cloneDefaultConfig() {
+      return JSON.parse(JSON.stringify(DEFAULT_CONFIG));
+    }
+
+    function hydrateControls(nextConfig) {
+      els.planText.textContent = nextConfig.originalRequest;
+      els.outputFormat.value = nextConfig.outputFormat;
+      els.targetSizeKB.value = nextConfig.targetSizeKB || '';
+      els.quality.value = nextConfig.quality || (nextConfig.outputFormat === 'png' ? 92 : 92);
+      els.qualityValue.textContent = String(els.quality.value);
+      els.resizeMode.value = nextConfig.resize.mode;
+      els.maxWidth.value = nextConfig.resize.maxWidth || '';
+      els.maxHeight.value = nextConfig.resize.maxHeight || '';
+      els.width.value = nextConfig.resize.width || '';
+      els.height.value = nextConfig.resize.height || '';
+      els.percentage.value = nextConfig.resize.percentage || '';
+      els.onlyShrink.checked = Boolean(nextConfig.resize.onlyShrink);
+      els.backgroundColor.value = nextConfig.backgroundColor;
+      els.stripMetadata.checked = Boolean(nextConfig.stripMetadata);
+      els.autoOrient.checked = Boolean(nextConfig.autoOrient);
+    }
+
+    function readControls() {
+      const quality = nullableInteger(els.quality.value, 1, 100);
+
+      return normalizeConfig({
+        originalRequest: config.originalRequest,
+        outputFormat: els.outputFormat.value,
+        targetSizeKB: nullableInteger(els.targetSizeKB.value, 1, 51200),
+        quality,
+        resize: {
+          mode: els.resizeMode.value,
+          maxWidth: nullableInteger(els.maxWidth.value, 1, 50000),
+          maxHeight: nullableInteger(els.maxHeight.value, 1, 50000),
+          width: nullableInteger(els.width.value, 1, 50000),
+          height: nullableInteger(els.height.value, 1, 50000),
+          percentage: nullableInteger(els.percentage.value, 1, 1000),
+          onlyShrink: els.onlyShrink.checked
+        },
+        stripMetadata: els.stripMetadata.checked,
+        autoOrient: els.autoOrient.checked,
+        backgroundColor: els.backgroundColor.value,
+        filenameHint: config.filenameHint
+      });
+    }
+
+    function updateResizeFields() {
+      const mode = els.resizeMode.value;
+      els.maxFields.classList.toggle('hidden', mode !== 'fit-within');
+      els.sizeFields.classList.toggle('hidden', !['width', 'height', 'exact'].includes(mode));
+      els.percentField.classList.toggle('hidden', mode !== 'percentage');
+      els.width.parentElement.classList.toggle('hidden', mode === 'height');
+      els.height.parentElement.classList.toggle('hidden', mode === 'width');
+    }
+
+    function renderPlan() {
+      const pieces = [config.originalRequest || 'Transform an image'];
+      const outputFormat = config.outputFormat === 'original' ? 'original format' : FORMAT_META[config.outputFormat].label;
+      pieces.push(`Output: ${outputFormat}`);
+
+      if (config.targetSizeKB) {
+        pieces.push(`Target: ${config.targetSizeKB} KB`);
+      }
+
+      const resize = resizeSummary(config.resize);
+      if (resize) {
+        pieces.push(resize);
+      }
+
+      els.planText.textContent = pieces.join(' | ');
+    }
+
+    function resizeSummary(resize) {
+      if (!resize || resize.mode === 'none') {
+        return '';
+      }
+
+      if (resize.mode === 'fit-within') {
+        return `Resize: max ${resize.maxWidth || 'any'} x ${resize.maxHeight || 'any'}`;
+      }
+
+      if (resize.mode === 'width') {
+        return `Resize: ${resize.width || 'auto'} px wide`;
+      }
+
+      if (resize.mode === 'height') {
+        return `Resize: ${resize.height || 'auto'} px tall`;
+      }
+
+      if (resize.mode === 'exact') {
+        return `Resize: ${resize.width || 'auto'} x ${resize.height || 'auto'}`;
+      }
+
+      if (resize.mode === 'percentage') {
+        return `Resize: ${resize.percentage || 100}%`;
+      }
+
+      return '';
+    }
+
+    function resolveOutputFormat(format, file, targetSizeKB) {
+      if (format !== 'original') {
+        return format;
+      }
+
+      const detected = detectedFormat(file);
+
+      if (detected) {
+        return detected;
+      }
+
+      return targetSizeKB ? 'jpeg' : 'png';
+    }
+
+    function detectedFormat(file) {
+      const mime = (file.type || '').toLowerCase();
+      const name = (file.name || '').toLowerCase();
+
+      if (mime === 'image/jpeg' || /\.(jpe?g)$/.test(name)) {
+        return 'jpeg';
+      }
+
+      if (mime === 'image/png' || /\.png$/.test(name)) {
+        return 'png';
+      }
+
+      if (mime === 'image/webp' || /\.webp$/.test(name)) {
+        return 'webp';
+      }
+
+      return '';
+    }
+
+    function detectedFormatLabel(file) {
+      const format = detectedFormat(file);
+
+      return format ? FORMAT_META[format].label : (file.type || 'Image');
+    }
+
+    function renderImage(container, url, alt) {
+      container.textContent = '';
+      const image = document.createElement('img');
+      image.src = url;
+      image.alt = alt;
+      container.append(image);
+    }
+
+    function clearOutput() {
+      if (outputUrl) {
+        URL.revokeObjectURL(outputUrl);
+        outputUrl = '';
+      }
+
+      els.outputBox.innerHTML = '<span class="empty">No output yet</span>';
+      els.outputMeta.textContent = '-';
+      els.outputFormatMetric.textContent = '-';
+      els.outputSize.textContent = '-';
+      els.outputPixels.textContent = '-';
+      els.resultNote.textContent = 'Processing settings are ready.';
+      els.downloadLink.classList.add('hidden');
+      els.downloadLink.removeAttribute('href');
+    }
+
+    function setStatus(message, tone, allowHtml) {
+      els.status.className = 'status';
+      if (tone === 'error') {
+        els.status.classList.add('error');
+      }
+      if (tone === 'warn') {
+        els.status.classList.add('warn');
+      }
+      if (allowHtml) {
+        els.status.innerHTML = message;
+      } else {
+        els.status.textContent = message;
+      }
+    }
+
+    function readImageDimensions(url) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => resolve({ width: image.naturalWidth, height: image.naturalHeight });
+        image.onerror = reject;
+        image.src = url;
+      });
+    }
+
+    function outputFileName(sourceName, hint, extension) {
+      const base = slugify(hint) || slugify(sourceName.replace(/\.[^.]+$/, '')) || 'output';
+
+      return `${base}.${extension}`;
+    }
+
+    function isImageExtension(name) {
+      return /\.(avif|bmp|gif|heic|heif|jpe?g|png|tiff?|webp)$/i.test(name || '');
+    }
+
+    function nullableInteger(value, min, max) {
+      if (value === null || value === undefined || value === '') {
+        return null;
+      }
+
+      const number = Number(value);
+
+      if (!Number.isFinite(number)) {
+        return null;
+      }
+
+      return Math.min(max, Math.max(min, Math.round(number)));
+    }
+
+    function clampNumber(value, min, max) {
+      if (!Number.isFinite(value)) {
+        return min;
+      }
+
+      return Math.min(max, Math.max(min, value));
+    }
+
+    function slugify(value) {
+      return String(value || '')
+        .toLowerCase()
+        .replace(/\.[a-z0-9]+$/i, '')
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '')
+        .slice(0, 64) || 'output';
+    }
+
+    function formatBytes(bytes) {
+      if (!Number.isFinite(bytes)) {
+        return '-';
+      }
+
+      if (bytes < 1024) {
+        return `${bytes} B`;
+      }
+
+      if (bytes < 1024 * 1024) {
+        return `${(bytes / 1024).toFixed(bytes < 10 * 1024 ? 1 : 0)} KB`;
+      }
+
+      return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+    }
+  </script>
+</body>
+</html>
